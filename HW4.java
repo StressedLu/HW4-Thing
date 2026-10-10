@@ -26,6 +26,19 @@ public class HW4 {
         }
     }
 
+    /** Draws a rows x cols grid of polygons; bottom-left point at (originX, originY). */
+    public static void drawGrid(Turtle t, double originX, double originY, int rows,
+                                int cols, double spacing, int sides, double sideLength,
+                                String color) {
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                t.penUp();
+                t.setPosition(originX + c * spacing, originY + r * spacing);
+                drawPolygon(t, sides, sideLength, color);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         // TODO: canvas/turtle setup once Turtle.java is available
     }
