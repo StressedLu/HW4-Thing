@@ -31,7 +31,6 @@ public class Hangman {
         int wrong = 0;
         System.out.println("The current phrase is " + masked);
         while (masked.indexOf('*') >= 0 && wrong < MAX_NUM_GUESSES) {
-            printNotGuessed(notGuessed);
             char guess = getGuess(console, notGuessed);
             boolean present = phrase.indexOf(guess) >= 0;
             if (present) {
@@ -40,7 +39,10 @@ public class Hangman {
                 wrong++;
             }
             notGuessed = removeLetter(notGuessed, guess);
-            printGuessResult(guess, present, wrong, masked);
+            printGuessResult(guess, present, wrong);
+            if (masked.indexOf('*') >= 0 && wrong < MAX_NUM_GUESSES) {
+                System.out.println("The current phrase is " + masked);
+            }
         }
         printResult(phrase, wrong < MAX_NUM_GUESSES);
     }
@@ -73,8 +75,9 @@ public class Hangman {
     /** Prompts until the user enters a valid guess; returns it as an uppercase letter. */
     public static char getGuess(Scanner console, String notGuessed) {
         while (true) {
+            printNotGuessed(notGuessed);
             System.out.print("Enter your next guess: ");
-            String input = console.next();
+            String input = console.nextLine().trim();
             char first = Character.toUpperCase(input.charAt(0));
             if (isValidGuess(first, notGuessed)) {
                 return first;
@@ -101,7 +104,7 @@ public class Hangman {
         System.out.println(display);
     }
 
-    public static void printGuessResult(char guess, boolean present, int wrong, String masked) {
+    public static void printGuessResult(char guess, boolean present, int wrong) {
         System.out.println("You guessed " + guess + ".");
         if (present) {
             System.out.println("That is present in the secret phrase.");
@@ -109,21 +112,22 @@ public class Hangman {
             System.out.println("That is not present in the secret phrase.");
         }
         System.out.println("Number of wrong guesses so far: " + wrong);
-        System.out.println("The current phrase is " + masked);
     }
 
     public static void printResult(String phrase, boolean won) {
         if (won) {
-            System.out.println("You won! The phrase was " + phrase);
+            System.out.println("The phrase is " + phrase + ".");
+            System.out.println("You win!!");
         } else {
-            System.out.println("You lost! The phrase was " + phrase);
+            System.out.println("You lose. The secret phrase was " + phrase);
         }
     }
 
     /** Asks whether to play again; returns true if the program should end. */
     public static boolean isGameEnd(Scanner console) {
-        System.out.print("Do you want to play again? (y/n) ");
-        String answer = console.next().toUpperCase();
+        System.out.println("Do you want to play again?");
+        System.out.print("Enter 'Y' or 'y' to play again: ");
+        String answer = console.nextLine().trim().toUpperCase();
         return !answer.startsWith("Y");
     }
 }
