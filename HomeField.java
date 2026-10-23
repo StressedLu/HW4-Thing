@@ -48,6 +48,7 @@ public class HomeField {
         System.out.print("Enter the file name: ");
         File file = new File(keyboard.nextLine().trim());
         while (!file.exists()) {
+            System.out.println("Sorry, that file does not exist");
             System.out.print("Enter the file name: ");
             file = new File(keyboard.nextLine().trim());
         }
@@ -60,8 +61,11 @@ public class HomeField {
         System.out.println("Do you want to check another data set?");
         System.out.print("Enter Y or y to analyze another file, anything else to quit: ");
         String response = keyboard.nextLine().trim();
-        System.out.println();
-        return Character.toUpperCase(response.charAt(0)) == 'Y';
+        boolean another = Character.toUpperCase(response.charAt(0)) == 'Y';
+        if (another) {
+            System.out.println();
+        }
+        return another;
     }
 
     // Read every game in the file in a single pass and print the results.
@@ -109,8 +113,10 @@ public class HomeField {
         }
 
         System.out.println();
-        System.out.println("********** " + sport + " --- " + season + " **********");
+        System.out.println("**********   " + sport + " --- " + season + "   **********");
+        System.out.println();
         System.out.println("HOME FIELD ADVANTAGE RESULTS");
+        System.out.println();
         printResults(totalGames, gamesWithHomeTeam, gamesHomeTeamWinner,
                 percentHomeTeamGames, percentHomeTeamWinners, averageMargin);
     }
