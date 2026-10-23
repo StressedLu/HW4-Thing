@@ -91,7 +91,12 @@ public class HomeField {
                 lineScanner.close();
 
                 if (team1.startsWith("@") || team2.startsWith("@")) {
-                    int margin = team1.startsWith("@") ? score1 - score2 : score2 - score1;
+                    int margin;
+                    if (team1.startsWith("@")) {
+                        margin = score1 - score2;
+                    } else {
+                        margin = score2 - score1;
+                    }
                     gamesWithHomeTeam++;
                     totalMargin += margin;
                     if (margin > 0) {
