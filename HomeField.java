@@ -2,122 +2,151 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
-/**
- * Processes game-result files and reports statistics used to examine whether
- * a home field advantage exists.
+/*
+ * CS312 Assignment 6 - HomeFieldAdvantage
+ * 
+ * On my honor, Jorge Garcia, this programming assignment is my own work, 
+ * I have not shared it with others and I will not share it in the future.
  *
- * ANALYSIS: Does the Home Field Advantage exist?
- * TODO: after running all 13 data files, fill in the observed numbers here
- * (home win percentage and average home margin per sport/season) and state
- * the conclusion they support.
+ * A program to play determine the extend of home field advantage in sports.
+ *
+ * Name: Jorge Garcia
+ * UTEID: jlg7659
+ *  
  */
+
+ 
+ //  ADD DATA ANALYSIS HERE
+ //  TODO: run all 13 data files, then state here whether the home field
+ //  advantage exists, citing the home team win percentage and average
+ //  home team margin for each sport and season.
+ 
 public class HomeField {
 
-    public static void main(String[] args) {
+    // Process home field analysis files until the user chooses to quit.
+    public static void main(String[] args) throws FileNotFoundException {
+        System.out.println("A program to analyze home field advantage in sports.");
+        System.out.println();
+        // DO NOT CREATE ANY OTHER SCANNERS for SYSTEM.IN.
         Scanner keyboard = new Scanner(System.in);
+
         boolean another = true;
-
         while (another) {
-            Scanner file = promptForFile(keyboard);
-
-            String sport = file.nextLine().trim();
-            String season = file.nextLine().trim();
-
-            int totalGames = 0;
-            int homeGames = 0;
-            int homeWins = 0;
-            long marginSum = 0;
-
-            // single pass through the file
-            while (file.hasNextLine()) {
-                String line = file.nextLine().trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                totalGames++;
-
-                String[] tokens = line.split("\\s+");
-                // tokens[0] is the date; team 1 name runs up to the first integer
-                int score1Index = nextIntegerIndex(tokens, 1);
-                int score2Index = nextIntegerIndex(tokens, score1Index + 1);
-
-                int score1 = Integer.parseInt(tokens[score1Index]);
-                int score2 = Integer.parseInt(tokens[score2Index]);
-
-                boolean team1Home = tokens[1].startsWith("@");
-                boolean team2Home = tokens[score1Index + 1].startsWith("@");
-
-                if (team1Home || team2Home) {
-                    int margin = team1Home ? score1 - score2 : score2 - score1;
-                    homeGames++;
-                    marginSum += margin;
-                    if (margin > 0) {
-                        homeWins++;
-                    }
-                }
-            }
-            file.close();
-
-            printResults(sport, season, totalGames, homeGames, homeWins, marginSum);
-
-            System.out.println("Do you want to check another data set?");
-            System.out.print("Enter Y or y to analyze another file, anything else to quit: ");
-            String response = keyboard.nextLine().trim();
-            another = Character.toUpperCase(response.charAt(0)) == 'Y';
+            Scanner fileScanner = getFileScanner(keyboard);
+            processFile(fileScanner);
+            fileScanner.close();
+            another = askToContinue(keyboard);
         }
+
         keyboard.close();
     }
 
-    /** Prompts until the user enters the name of an existing file; returns a Scanner on it. */
-    public static Scanner promptForFile(Scanner keyboard) {
-        while (true) {
+    // Prompt until the user enters the name of an existing file,
+    // then return a Scanner connected to that file.
+    private static Scanner getFileScanner(Scanner keyboard)
+            throws FileNotFoundException {
+        System.out.print("Enter the file name: ");
+        File file = new File(keyboard.nextLine().trim());
+        while (!file.exists()) {
             System.out.print("Enter the file name: ");
-            String name = keyboard.nextLine().trim();
-            File f = new File(name);
-            if (f.isFile()) {
-                try {
-                    return new Scanner(f);
-                } catch (FileNotFoundException e) {
-                    // fall through and ask again
+            file = new File(keyboard.nextLine().trim());
+        }
+        return new Scanner(file);
+    }
+
+    // Ask whether to analyze another file. Only the first non-whitespace
+    // character of the response matters, and Y is case-insensitive.
+    private static boolean askToContinue(Scanner keyboard) {
+        System.out.println("Do you want to check another data set?");
+        System.out.print("Enter Y or y to analyze another file, anything else to quit: ");
+        String response = keyboard.nextLine().trim();
+        System.out.println();
+        return Character.toUpperCase(response.charAt(0)) == 'Y';
+    }
+
+    // Read every game in the file in a single pass and print the results.
+    private static void processFile(Scanner fileScanner) {
+        String sport = fileScanner.nextLine().trim();
+        String season = fileScanner.nextLine().trim();
+
+        int totalGames = 0;
+        int gamesWithHomeTeam = 0;
+        int gamesHomeTeamWinner = 0;
+        int totalMargin = 0;
+
+        while (fileScanner.hasNextLine()) {
+            String line = fileScanner.nextLine().trim();
+            if (!line.isEmpty()) {
+                totalGames++;
+                Scanner lineScanner = new Scanner(line);
+                lineScanner.next(); // date
+                String team1 = readTeamName(lineScanner);
+                int score1 = lineScanner.nextInt();
+                String team2 = readTeamName(lineScanner);
+                int score2 = lineScanner.nextInt();
+                lineScanner.close();
+
+                if (team1.startsWith("@") || team2.startsWith("@")) {
+                    int margin = team1.startsWith("@") ? score1 - score2 : score2 - score1;
+                    gamesWithHomeTeam++;
+                    totalMargin += margin;
+                    if (margin > 0) {
+                        gamesHomeTeamWinner++;
+                    }
                 }
             }
         }
-    }
 
-    /** Returns the index of the first token at or after start that is an integer. */
-    public static int nextIntegerIndex(String[] tokens, int start) {
-        int i = start;
-        while (!isInteger(tokens[i])) {
-            i++;
+        double percentHomeTeamGames = 0.0;
+        if (totalGames > 0) {
+            percentHomeTeamGames = 100.0 * gamesWithHomeTeam / totalGames;
         }
-        return i;
-    }
-
-    public static boolean isInteger(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            if (!Character.isDigit(s.charAt(i))) {
-                return false;
-            }
+        double percentHomeTeamWinners = 0.0;
+        double averageMargin = 0.0;
+        if (gamesWithHomeTeam > 0) {
+            percentHomeTeamWinners = 100.0 * gamesHomeTeamWinner / gamesWithHomeTeam;
+            averageMargin = (double) totalMargin / gamesWithHomeTeam;
         }
-        return !s.isEmpty();
-    }
-
-    /** Prints the results in the required format. */
-    public static void printResults(String sport, String season, int totalGames,
-                                    int homeGames, int homeWins, long marginSum) {
-        double homePct = totalGames == 0 ? 0 : 100.0 * homeGames / totalGames;
-        double winPct = homeGames == 0 ? 0 : 100.0 * homeWins / homeGames;
-        double avgMargin = homeGames == 0 ? 0 : (double) marginSum / homeGames;
 
         System.out.println();
         System.out.println("********** " + sport + " --- " + season + " **********");
         System.out.println("HOME FIELD ADVANTAGE RESULTS");
-        System.out.printf("Total number of games: %,d%n", totalGames);
-        System.out.printf("Number of games with a home team: %,d%n", homeGames);
-        System.out.printf("Percentage of games with a home team: %.1f%%%n", homePct);
-        System.out.printf("Number of games the home team won: %,d%n", homeWins);
-        System.out.printf("Home team win percentage: %.1f%%%n", winPct);
-        System.out.printf("Home team average margin: %.2f%n", avgMargin);
-        System.out.println();
+        printResults(totalGames, gamesWithHomeTeam, gamesHomeTeamWinner,
+                percentHomeTeamGames, percentHomeTeamWinners, averageMargin);
     }
+
+    // Read tokens up to, but not including, the next integer (the team's score).
+    // Returns the team name with single spaces between words.
+    private static String readTeamName(Scanner lineScanner) {
+        String name = lineScanner.next();
+        while (!lineScanner.hasNextInt()) {
+            name += " " + lineScanner.next();
+        }
+        return name;
+    }
+
+    // Use this method to print the summary results
+	// ** Do not change the code in this method **
+
+    
+    
+    
+    
+    
+    private static void printResults(int totalGames,
+        int gamesWithHomeTeam,
+        int gamesHomeTeamWinner,
+        double percentHomeTeamGames,
+        double percentHomeTeamWinners,
+        double margin) {
+    
+        System.out.printf("Total number of games: %,d\n", totalGames);
+        System.out.printf("Number of games with a home team: %,d\n", gamesWithHomeTeam);
+        System.out.printf("Percentage of games with a home team:%5.1f%%\n", percentHomeTeamGames);
+        System.out.printf("Number of games the home team won: %,d\n", gamesHomeTeamWinner);
+        System.out.printf("Home team win percentage:%5.1f", percentHomeTeamWinners);
+        System.out.println("%");
+        System.out.printf("Home team average margin:%5.2f\n\n", margin);
+    }
+
 }
