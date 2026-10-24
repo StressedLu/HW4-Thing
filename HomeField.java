@@ -23,6 +23,9 @@ import java.util.Scanner;
  
 public class HomeField {
 
+    // Margin value that marks a game with no home team (a neutral site).
+    private static final int NO_HOME_TEAM = Integer.MIN_VALUE;
+
     // Process home field analysis files until the user chooses to quit.
     public static void main(String[] args) throws FileNotFoundException {
         System.out.println("A program to analyze home field advantage in sports.");
@@ -72,40 +75,48 @@ public class HomeField {
     private static void processFile(Scanner fileScanner) {
         String sport = fileScanner.nextLine().trim();
         String season = fileScanner.nextLine().trim();
-
         int totalGames = 0;
         int gamesWithHomeTeam = 0;
         int gamesHomeTeamWinner = 0;
         int totalMargin = 0;
-
         while (fileScanner.hasNextLine()) {
-            String line = fileScanner.nextLine().trim();
-            if (!line.isEmpty()) {
-                totalGames++;
-                Scanner lineScanner = new Scanner(line);
-                lineScanner.next(); // date
-                String team1 = readTeamName(lineScanner);
-                int score1 = lineScanner.nextInt();
-                String team2 = readTeamName(lineScanner);
-                int score2 = lineScanner.nextInt();
-                lineScanner.close();
-
-                if (team1.startsWith("@") || team2.startsWith("@")) {
-                    int margin;
-                    if (team1.startsWith("@")) {
-                        margin = score1 - score2;
-                    } else {
-                        margin = score2 - score1;
-                    }
-                    gamesWithHomeTeam++;
-                    totalMargin += margin;
-                    if (margin > 0) {
-                        gamesHomeTeamWinner++;
-                    }
+            totalGames++;
+            int margin = getHomeMargin(fileScanner.nextLine());
+            if (margin != NO_HOME_TEAM) {
+                gamesWithHomeTeam++;
+                totalMargin += margin;
+                if (margin > 0) {
+                    gamesHomeTeamWinner++;
                 }
             }
         }
+        printSummary(sport, season, totalGames, gamesWithHomeTeam,
+                gamesHomeTeamWinner, totalMargin);
+    }
 
+    // Return how many more points the home team scored than the away team
+    // in the given game line, or NO_HOME_TEAM if the game had no home team.
+    private static int getHomeMargin(String line) {
+        Scanner lineScanner = new Scanner(line);
+        lineScanner.next(); // date
+        String team1 = readTeamName(lineScanner);
+        int score1 = lineScanner.nextInt();
+        String team2 = readTeamName(lineScanner);
+        int score2 = lineScanner.nextInt();
+        lineScanner.close();
+        if (team1.startsWith("@")) {
+            return score1 - score2;
+        } else if (team2.startsWith("@")) {
+            return score2 - score1;
+        } else {
+            return NO_HOME_TEAM;
+        }
+    }
+
+    // Calculate the percentages and average margin, then print the header
+    // and the results for one file.
+    private static void printSummary(String sport, String season, int totalGames,
+            int gamesWithHomeTeam, int gamesHomeTeamWinner, int totalMargin) {
         double percentHomeTeamGames = 0.0;
         if (totalGames > 0) {
             percentHomeTeamGames = 100.0 * gamesWithHomeTeam / totalGames;
@@ -116,7 +127,6 @@ public class HomeField {
             percentHomeTeamWinners = 100.0 * gamesHomeTeamWinner / gamesWithHomeTeam;
             averageMargin = (double) totalMargin / gamesWithHomeTeam;
         }
-
         System.out.println();
         System.out.println("**********   " + sport + " --- " + season + "   **********");
         System.out.println();
