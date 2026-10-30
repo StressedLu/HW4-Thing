@@ -1,28 +1,39 @@
+/*
+ * CS312 Assignment 7 - Personality Quiz
+ *
+ * On my honor, <NAME>, this programming assignment is my own work,
+ * I have not shared it with others and I will not share it in the future.
+ *
+ * A program to read a file with raw data from a Keirsey personality test
+ * and print out the results.
+ *
+ * Name:
+ * UTEID:
+ *
+ */
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
-/**
- * Reads Myers-Briggs quiz answers from a file, computes the percentage of B
- * answers in each of four dimensions, and prints each person's personality type.
- */
 public class Personality {
 
-    static final int DIMENSIONS = 4;
-    static final int GROUP_SIZE = 7;
-    static final int THRESHOLD = 50;
-    static final int NO_ANSWERS = -1;
-    static final String LEFT_LETTERS = "ESTJ";
-    static final String RIGHT_LETTERS = "INFP";
-    // dimension index for each position within a group of 7 questions
-    static final int[] GROUP_PATTERN = {0, 1, 1, 2, 2, 3, 3};
+    // ADD CLASS CONSTANTS HERE
+    public static final int NUM_DIMS = 4;
+    public static final double NO_ANSWERS = -1.0;
+    public static final double THRESHOLD = 0.5;
+    public static final int GROUP_SIZE = 7;
+    public static final String LEFT_LETTERS = "ESTJ";
+    public static final String RIGHT_LETTERS = "INFP";
+    // dimension index for each question's position within a group of 7
+    public static final int[] GROUP_PATTERN = {0, 1, 1, 2, 2, 3, 3};
 
+    // The main method to process the data from the personality tests
     public static void main(String[] args) {
         Scanner keyboard = new Scanner(System.in);
         Scanner fileScanner = getFileScanner(keyboard);
 
-        int people = Integer.parseInt(fileScanner.nextLine().trim());
-        for (int i = 0; i < people; i++) {
+        int numPeople = Integer.parseInt(fileScanner.nextLine().trim());
+        for (int i = 0; i < numPeople; i++) {
             String name = fileScanner.nextLine();
             String answers = fileScanner.nextLine();
             processPerson(name, answers);
@@ -32,52 +43,53 @@ public class Personality {
         keyboard.close();
     }
 
-    /** Computes and displays the results for one person. */
+    // ADD METHODS HERE
+
+    // compute and display the results for one person
     public static void processPerson(String name, String answers) {
-        int[] aCounts = new int[DIMENSIONS];
-        int[] bCounts = new int[DIMENSIONS];
+        int[] aCounts = new int[NUM_DIMS];
+        int[] bCounts = new int[NUM_DIMS];
         countAnswers(answers, aCounts, bCounts);
-        int[] percents = computePercentB(aCounts, bCounts);
-        String type = determineType(percents);
-        displayOutput(name, percents, type);
+        double[] percentages = computePercentB(aCounts, bCounts);
+        displayOutput(name, percentages, determineType(percentages));
     }
 
-    /** Tallies A and B answers per dimension; dashes are ignored. */
+    // tally A and B answers per dimension; dashes are ignored
     public static void countAnswers(String answers, int[] aCounts, int[] bCounts) {
         for (int i = 0; i < answers.length(); i++) {
-            int dimension = GROUP_PATTERN[i % GROUP_SIZE];
+            int dim = GROUP_PATTERN[i % GROUP_SIZE];
             char answer = Character.toUpperCase(answers.charAt(i));
             if (answer == 'A') {
-                aCounts[dimension]++;
+                aCounts[dim]++;
             } else if (answer == 'B') {
-                bCounts[dimension]++;
+                bCounts[dim]++;
             }
         }
     }
 
-    /** Returns the rounded percentage of B answers per dimension, or NO_ANSWERS. */
-    public static int[] computePercentB(int[] aCounts, int[] bCounts) {
-        int[] percents = new int[DIMENSIONS];
-        for (int i = 0; i < DIMENSIONS; i++) {
+    // fraction of B answers per dimension, or NO_ANSWERS if none were given
+    public static double[] computePercentB(int[] aCounts, int[] bCounts) {
+        double[] percentages = new double[NUM_DIMS];
+        for (int i = 0; i < NUM_DIMS; i++) {
             int total = aCounts[i] + bCounts[i];
             if (total == 0) {
-                percents[i] = NO_ANSWERS;
+                percentages[i] = NO_ANSWERS;
             } else {
-                percents[i] = (int) Math.round(100.0 * bCounts[i] / total);
+                percentages[i] = (double) bCounts[i] / total;
             }
         }
-        return percents;
+        return percentages;
     }
 
-    /** Builds the four-letter type: X for a tie, - for no answers. */
-    public static String determineType(int[] percents) {
+    // four letter type: X for a tie, - for no answers
+    public static String determineType(double[] percentages) {
         String type = "";
-        for (int i = 0; i < DIMENSIONS; i++) {
-            if (percents[i] == NO_ANSWERS) {
+        for (int i = 0; i < NUM_DIMS; i++) {
+            if (percentages[i] == NO_ANSWERS) {
                 type += "-";
-            } else if (percents[i] == THRESHOLD) {
+            } else if (percentages[i] == THRESHOLD) {
                 type += "X";
-            } else if (percents[i] > THRESHOLD) {
+            } else if (percentages[i] > THRESHOLD) {
                 type += RIGHT_LETTERS.charAt(i);
             } else {
                 type += LEFT_LETTERS.charAt(i);
@@ -86,7 +98,7 @@ public class Personality {
         return type;
     }
 
-    /** Prompts for a filename until a readable file is given. */
+    // prompt for a filename until a readable file is given
     public static Scanner getFileScanner(Scanner keyboard) {
         Scanner result = null;
         while (result == null) {
@@ -101,16 +113,20 @@ public class Personality {
         return result;
     }
 
-    /** Prints one formatted result line. */
-    public static void displayOutput(String name, int[] percents, String type) {
-        System.out.print(name + ":");
-        for (int i = 0; i < DIMENSIONS; i++) {
-            if (percents[i] == NO_ANSWERS) {
-                System.out.print(" NO ANSWERS");
+    // method to print results
+    public static void displayOutput(String name, double[] percentages, String results) {
+        int intPercent = 0;
+        String strPercent = "";
+        System.out.printf("%31s", (name + ":"));
+        for (int i = 0; i < NUM_DIMS; i++) {
+            if (percentages[i] != NO_ANSWERS) {
+                intPercent = (int) (Math.round(percentages[i] * 100));
+                strPercent = String.valueOf(intPercent);
+                System.out.printf("%11s", strPercent);
             } else {
-                System.out.print(" " + percents[i]);
+                System.out.printf("%11s", "NO ANSWERS");
             }
         }
-        System.out.println(" = " + type);
+        System.out.println(" = " + results);
     }
 }
