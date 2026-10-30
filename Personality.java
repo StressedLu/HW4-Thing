@@ -18,6 +18,13 @@ import java.util.Scanner;
 public class Personality {
 
     // ADD CLASS CONSTANTS HERE
+    // Thought process / build order (design a little, code a little, test a little):
+    //   Step 1: countAnswers    - String of 70 letters -> A and B counters per dimension
+    //   Step 2: computePercentB - counters -> percentage of B answers per dimension
+    //   Step 3: determineType   - percentages -> 4 letter personality type
+    //   Step 4: processPerson   - ties steps 1-3 together for one person
+    //   Step 5: main            - read the file and call processPerson for each person
+    //   getFileScanner / displayOutput are helpers for input and output.
     public static final int NUM_DIMS = 4;
     public static final double NO_ANSWERS = -1.0;
     public static final double THRESHOLD = 0.5;
@@ -27,7 +34,7 @@ public class Personality {
     // dimension index for each question's position within a group of 7
     public static final int[] GROUP_PATTERN = {0, 1, 1, 2, 2, 3, 3};
 
-    // The main method to process the data from the personality tests
+    // Step 5: process the data from the personality tests, one person at a time
     public static void main(String[] args) {
         Scanner keyboard = new Scanner(System.in);
         Scanner fileScanner = getFileScanner(keyboard);
@@ -43,18 +50,10 @@ public class Personality {
         keyboard.close();
     }
 
-    // ADD METHODS HERE
+    // ADD METHODS HERE (listed in the order they would be built)
 
-    // compute and display the results for one person
-    public static void processPerson(String name, String answers) {
-        int[] aCounts = new int[NUM_DIMS];
-        int[] bCounts = new int[NUM_DIMS];
-        countAnswers(answers, aCounts, bCounts);
-        double[] percentages = computePercentB(aCounts, bCounts);
-        displayOutput(name, percentages, determineType(percentages));
-    }
-
-    // tally A and B answers per dimension; dashes are ignored
+    // Step 1 (start here): count A and B answers per dimension.
+    // Question i belongs to dimension GROUP_PATTERN[i % 7]; dashes are skipped.
     public static void countAnswers(String answers, int[] aCounts, int[] bCounts) {
         for (int i = 0; i < answers.length(); i++) {
             int dim = GROUP_PATTERN[i % GROUP_SIZE];
@@ -67,7 +66,8 @@ public class Personality {
         }
     }
 
-    // fraction of B answers per dimension, or NO_ANSWERS if none were given
+    // Step 2: fraction of B answers per dimension (0 to 1), or NO_ANSWERS
+    // when the person skipped every question (avoids dividing by zero)
     public static double[] computePercentB(int[] aCounts, int[] bCounts) {
         double[] percentages = new double[NUM_DIMS];
         for (int i = 0; i < NUM_DIMS; i++) {
@@ -81,7 +81,8 @@ public class Personality {
         return percentages;
     }
 
-    // four letter type: X for a tie, - for no answers
+    // Step 3: pick a letter per dimension. Above THRESHOLD -> B side letter,
+    // below -> A side letter, exactly at THRESHOLD -> X, no answers -> -
     public static String determineType(double[] percentages) {
         String type = "";
         for (int i = 0; i < NUM_DIMS; i++) {
@@ -98,7 +99,16 @@ public class Personality {
         return type;
     }
 
-    // prompt for a filename until a readable file is given
+    // Step 4: run steps 1-3 for one person and print the result
+    public static void processPerson(String name, String answers) {
+        int[] aCounts = new int[NUM_DIMS];
+        int[] bCounts = new int[NUM_DIMS];
+        countAnswers(answers, aCounts, bCounts);
+        double[] percentages = computePercentB(aCounts, bCounts);
+        displayOutput(name, percentages, determineType(percentages));
+    }
+
+    // helper: ask for a filename until a readable file is given
     public static Scanner getFileScanner(Scanner keyboard) {
         Scanner result = null;
         while (result == null) {
@@ -113,7 +123,7 @@ public class Personality {
         return result;
     }
 
-    // method to print results
+    // helper: print one formatted result line
     public static void displayOutput(String name, double[] percentages, String results) {
         int intPercent = 0;
         String strPercent = "";
